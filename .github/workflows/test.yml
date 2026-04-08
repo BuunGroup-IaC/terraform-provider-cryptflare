@@ -1,0 +1,75 @@
+name: Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - run: go build -v ./...
+
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - uses: golangci/golangci-lint-action@v6
+        with:
+          version: latest
+
+  generate:
+    name: Generate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - run: make generate
+      - name: Verify no changes
+        run: |
+          git diff --compact-summary --exit-code || \
+            (echo "Run 'make generate' and commit the changes" && exit 1)
+
+  test:
+    name: Test (Terraform ${{ matrix.terraform }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        terraform:
+          - "1.13.*"
+          - "1.14.*"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ matrix.terraform }}
+          terraform_wrapper: false
+      - run: go test -v -cover ./...
+      - name: Acceptance tests
+        if: github.event_name == 'push'
+        env:
+          TF_ACC: "1"
+          CRYPTFLARE_API_TOKEN: ${{ secrets.CRYPTFLARE_API_TOKEN }}
+          CRYPTFLARE_ORG_ID: ${{ secrets.CRYPTFLARE_ORG_ID }}
+          CRYPTFLARE_API_URL: ${{ secrets.CRYPTFLARE_API_URL }}
+        run: go test -v -cover -timeout 120m ./internal/...

@@ -1,0 +1,42 @@
+#!/bin/sh
+# Enforce conventional commit prefixes for Terraform provider releases.
+# Valid: feat, fix, breaking, chore, docs, refactor, test, ci, build
+#
+# Examples:
+#   feat: add token resource
+#   fix: handle 404 on workspace read
+#   breaking: rename org_id to organisation_id
+#   docs: update README
+#   chore: bump go dependencies
+
+COMMIT_MSG_FILE="$1"
+COMMIT_MSG=$(head -1 "$COMMIT_MSG_FILE")
+
+PATTERN="^(feat|fix|breaking|chore|docs|refactor|test|ci|build)(\(.+\))?: .+"
+
+if ! echo "$COMMIT_MSG" | grep -Eq "$PATTERN"; then
+  echo ""
+  echo "ERROR: Invalid commit message format."
+  echo ""
+  echo "  Got: $COMMIT_MSG"
+  echo ""
+  echo "  Expected: <type>: <description>"
+  echo ""
+  echo "  Valid types:"
+  echo "    feat:      New feature (triggers minor release)"
+  echo "    fix:       Bug fix (triggers patch release)"
+  echo "    breaking:  Breaking change (triggers major release)"
+  echo "    chore:     Maintenance (no release)"
+  echo "    docs:      Documentation (no release)"
+  echo "    refactor:  Code change (no release)"
+  echo "    test:      Tests (no release)"
+  echo "    ci:        CI/CD (no release)"
+  echo "    build:     Build system (no release)"
+  echo ""
+  echo "  Examples:"
+  echo "    feat: add cryptflare_token resource"
+  echo "    fix(secret): handle rotation on missing key"
+  echo "    docs: update provider configuration guide"
+  echo ""
+  exit 1
+fi
