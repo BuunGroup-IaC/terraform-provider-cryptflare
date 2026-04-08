@@ -69,7 +69,7 @@ jobs:
         if: github.event_name == 'push'
         env:
           TF_ACC: "1"
-          CRYPTFLARE_API_TOKEN: ${{ secrets.CRYPTFLARE_API_TOKEN }}
-          CRYPTFLARE_ORG_ID: ${{ secrets.CRYPTFLARE_ORG_ID }}
-          CRYPTFLARE_API_URL: ${{ secrets.CRYPTFLARE_API_URL }}
+          CF_TOKEN: ${{ secrets.CRYPTFLARE_API_TOKEN }}
+          CF_ORG: ${{ secrets.CRYPTFLARE_ORG_ID }}
+          CF_API_URL: ${{ secrets.CRYPTFLARE_API_URL }}
         run: go test -v -cover -timeout 120m ./internal/...
